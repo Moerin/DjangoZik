@@ -17,7 +17,7 @@ from djangolib.urls import urlpatterns as urlslib
 
 admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = (patterns('',
                        url(r'^$',
                            login_required(HomeView.as_view()),
                            name='home'),
@@ -61,6 +61,6 @@ urlpatterns = patterns('',
                            name="tab"),
                        url(r'^favicon\.',
                            RedirectView.as_view(url='/static/favicon.ico'))
-                       ) \
-    + urlslib \
-    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+                       ) 
+    + urlslib 
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT))

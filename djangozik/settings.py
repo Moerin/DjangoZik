@@ -51,8 +51,8 @@ USE_L10N = True
 USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/var/www/example.com/media/"
-MEDIA_ROOT = ''
+# Example: "/var/www/example.com/m/home/sebastien/Musicedia/"
+MEDIA_ROOT = ['/home/sebastien/Music', '/home/sebastien/Calibre Library']
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -82,7 +82,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder', )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = ''
+SECRET_KEY = 'quandctropctropico!COCO!'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = ('django.template.loaders.filesystem.Loader',
@@ -107,8 +107,8 @@ TEMPLATE_DIRS = (os.path.join(BASE_DIR, 'templates/'), )
 INSTALLED_APPS = ('django.contrib.auth', 'django.contrib.contenttypes',
                   'django.contrib.sessions', 'django.contrib.sites',
                   'django.contrib.messages', 'django.contrib.staticfiles',
-                  'django.contrib.admin', 'djangozik', 'infos_grabber',
-                  'guitar_tabs', 'rest_framework', 'api',)
+                  'django.contrib.admin', 'djangozik', 'djangolib',
+                  'infos_grabber', 'guitar_tabs', 'rest_framework', 'api',)
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
