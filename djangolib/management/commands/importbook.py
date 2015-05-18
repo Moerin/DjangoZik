@@ -5,11 +5,13 @@ from django.utils.encoding import smart_text
 from django.conf import settings
 from djangolib.models import Book, Author, Style
 from infos_grabber.metadataGrabber import MetadataGrabber
+
 from optparse import make_option
 import re
 import os
-import pdfminer
-#import mutagen
+
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
 
 
 class Command(BaseCommand):
@@ -26,12 +28,12 @@ class Command(BaseCommand):
         if options['verbose']:
             self.stdout.write("Scanning : %s" % settings.MEDIA_ROOT)
         else:
-            self.stdout.write("Scanning music folder")
+            self.stdout.write("Scanning book folder")
         books = []
         for root, dirs, files in os.walk(settings.MEDIA_ROOT):
             for filename in files:
                 if not filename.endswith(
-                    ('.pdf', 'epub')) or filename.startswith('.'):
+                    ('.pdf')) or filename.startswith('.'):
                     continue
 
                 books.append(os.path.join(root, filename))
@@ -47,12 +49,14 @@ class Command(BaseCommand):
                                           book_path.decode('utf-8', 'ignore'))
                     continue
 
-                tags = self.get_tags(book)
+                with open(book, 'rb') as file_book:
+                    tags = self.get_tags(file_book)
+                    print(tags)
 
                 # Check if a similar book exists
                 try:
                     author = Author.objects.filter(name=tags['author'])
-                    new_book = Book.objects.filter(title=tags['name'],
+                    new_book = Book.objects.filter(name=tags['name'],
                                                    author=author)
                     if new_book.count() > 0:
                         continue
@@ -106,7 +110,9 @@ class Command(BaseCommand):
         return style
 
     def create_book(self, name, author, style, book):
-        book, created = Book.objects.get_or_create(title=title,
+        print(name, author, style, book)
+        print(type(name), type(author), type(style), type(book))
+        book, created = Book.objects.get_or_create(name=name,
                                                    author=author,
                                                    style=style,
                                                    filepath=book)
@@ -116,33 +122,39 @@ class Command(BaseCommand):
 
     # TODO rename get_info
     def get_tags(self, book):
-        title = book.decode('utf-8', 'ignore').split('/')[-1]
+        # title = book.decode('utf-8', 'ignore').split('/')[-1]
         date = "0001-01-01"
-        genre = "Unknown"
+        producer = "Unknown"
         author = "Unknown"
 
         try:
+            parser = PDFParser(book)
+            doc = PDFDocument(parser)
+            book = doc.info
+            
             # TODO change mutagen for pdfminer http://stackoverflow.com/questions/14209214/reading-the-pdf-properties-metadata-in-python
-            book = mutagen.File(smart_text(book), easy=True)
-            if "name" in book.keys():
-                name = book['name'][0].encode('utf-8').strip().capitalize()
-            if "date" in book.keys():
-                date = "%s-01-01" % book['date'][0].encode('utf-8').strip()
-                regex = re.compile("^([0-9]{4}-[0-9]{2}-[0-9]{2})$")
-                if not regex.match(date) or date == "0000-01-01":
-                    date = None
-            if "genre" in book.keys():
-                genre = book['genre'][0].encode('utf-8').strip().capitalize()
-            if "author" in book.keys():
-                author = book['author'][0].encode('utf-8').strip().capitalize()
-        except:
-            # Use default values
-            pass
+            title = book[0].get('Title', 'Unknown')
+            if title != "Unknown":
+                title = title.strip().capitalize().decode('utf-8')
+            if "CreationDate" in book[0].keys():
+                date = "%s" % book[0]['CreationDate'].strip().decode('utf-8')
+                #regex = re.compile("^([0-9]{4}-[0-9]{2}-[0-9]{2})$")
+                #if not regex.match(date) or date == "0000-01-01":
+                #    date = None
+            if "Producer" in book[0].keys():
+                producer = book[0]['Producer'].strip().capitalize().decode('utf-8')
+            if "Creator" in book[0].keys():
+                author = book[0]['Creator'].strip().capitalize().decode('utf-8')
+        except KeyError as e:
+            print(e.message)
+        except UnicodeDecodeError:
+            print(title)
+            title = title.decode('latin-1', 'ignore').strip().capitalize()
 
         return {
-            'name': name,
+            'title': title,
             'date': date,
-            'genre': genre,
+            'genre': producer,
             'author': author
         }
 
