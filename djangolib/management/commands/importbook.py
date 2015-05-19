@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils.encoding import smart_text
-from django.conf import settings
 from djangolib.models import Book, Author, Style
 from infos_grabber.metadataGrabber import MetadataGrabber
 
-from optparse import make_option
 import re
 import os
+from optparse import make_option
 
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
@@ -51,7 +51,6 @@ class Command(BaseCommand):
 
                 with open(book, 'rb') as file_book:
                     tags = self.get_tags(file_book)
-                    print(tags)
 
                 # Check if a similar book exists
                 try:
@@ -82,13 +81,14 @@ class Command(BaseCommand):
                 if (bookpath[0] == "/"):
                     bookpath = bookpath[1:]
 
+                print(bookpath)
                 self.create_book(tags['title'], author, style, bookpath)
 
         self.stdout.write("Book scan finished")
 
         # Import authors
-        self.stdout.write("Import authors")
-        ImportAuthor.import_authors()
+        #self.stdout.write("Import authors")
+        #ImportAuthor.import_authors()
 
         # Import covers
         self.stdout.write("Import covers")
@@ -110,8 +110,6 @@ class Command(BaseCommand):
         return style
 
     def create_book(self, name, author, style, book):
-        print(name, author, style, book)
-        print(type(name), type(author), type(style), type(book))
         book, created = Book.objects.get_or_create(name=name,
                                                    author=author,
                                                    style=style,

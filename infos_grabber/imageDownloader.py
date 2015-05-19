@@ -4,6 +4,7 @@ import requests
 
 
 class ImageDownloader:
+
     def __init__(self, destination):
         self.destination = destination
 
@@ -18,6 +19,7 @@ class ImageDownloader:
                 return None
         else:
             return None
+
         return "%s%s" % (self.destination, name)
 
 
@@ -27,7 +29,8 @@ if __name__ == "__main__":
     image_local_path = image_downloader.download(
         'http://ecx.images-amazon.com/images/I/51DU8kmcx1L._SP160,160,0,T_.jpg',
         'black_ice.jpg')
-    if image_local_path is not None:
+
+    if image_local_path:
         print "Image saved to : %s" % image_local_path
     else:
         print "Error"

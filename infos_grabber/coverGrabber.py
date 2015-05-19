@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 
 class CoverGrabber:
     def __init__(self, url=None):
-        if url is None:
-            self.url = 'http://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps&field-keywords=cd'
+        if not url:
+            self.url = 'http://www.amazon.com/s/ref=nb_sb_noss_2?url=search-alias=aps&field-keywords=book'
         else:
             self.url = url
 
@@ -28,11 +28,11 @@ class CoverGrabber:
 
 
 if __name__ == "__main__":
-    print "Grab CD Cover from Amazon"
+    print "Grab Book Cover from Amazon"
     cover_grabber = CoverGrabber()
 
-    cover = cover_grabber.grab('Black ice')
-    if cover is None:
+    cover = cover_grabber.grab('Harry Potter')
+    if not cover:
         print "Error"
     else:
         print "Cover : %s" % cover
