@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils.encoding import smart_text
+from django.db.utils import DataError
 from djangolib.models import Book, Author, Style
 from infos_grabber.metadataGrabber import MetadataGrabber
 
@@ -64,10 +65,10 @@ class Command(BaseCommand):
 
                 # Visual output
                 if options['verbose']:
-                    frmt_str = "+ %s : %s (%s, %s)"
+                    frmt_str = "+ %s : %s (%s)"
                     self.stdout.write(
                         frmt_str % (tags['author'].decode('utf-8', 'replace'),
-                                    tags['title'].decode('utf-8', 'replace'),
+                                    tags['name'].decode('utf-8', 'replace'),
                                     tags['genre'].decode('utf-8', 'replace')))
 
                 # Create author if not exists
@@ -81,8 +82,7 @@ class Command(BaseCommand):
                 if (bookpath[0] == "/"):
                     bookpath = bookpath[1:]
 
-                print(bookpath)
-                self.create_book(tags['title'], author, style, bookpath)
+                self.create_book(tags['name'], author, style, bookpath)
 
         self.stdout.write("Book scan finished")
 
@@ -104,23 +104,34 @@ class Command(BaseCommand):
         return author
 
     def create_style(self, name):
-        style, created = Style.objects.get_or_create(name=name)
+        created = None
+        try:
+            style, created = Style.objects.get_or_create(name=name)
+        except DataError as err:
+            print('{0} {1} : {2} {0}'.format('*'*50, str(err), name)
+
         if created:
             style.save()
-        return style
 
     def create_book(self, name, author, style, book):
-        book, created = Book.objects.get_or_create(name=name,
-                                                   author=author,
-                                                   style=style,
-                                                   filepath=book)
+        created = None
+        try:
+            book, created = Book.objects.get_or_create(name=name,
+                                                       author=author,
+                                                       style=style,
+                                                       filepath=book)
+        except DataError as err:
+            print('{0} {1} : {2} {0}'.format('*'*50, str(err), name)
+        except ValueError as err:
+            print(err)
+
         if created:
             book.save()
-        return book
+
 
     # TODO rename get_info
     def get_tags(self, book):
-        # title = book.decode('utf-8', 'ignore').split('/')[-1]
+        # name = book.decode('utf-8', 'ignore').split('/')[-1]
         date = "0001-01-01"
         producer = "Unknown"
         author = "Unknown"
@@ -131,9 +142,9 @@ class Command(BaseCommand):
             book = doc.info
             
             # TODO change mutagen for pdfminer http://stackoverflow.com/questions/14209214/reading-the-pdf-properties-metadata-in-python
-            title = book[0].get('Title', 'Unknown')
-            if title != "Unknown":
-                title = title.strip().capitalize().decode('utf-8')
+            name = book[0].get('Title', 'Unknown')
+            if name != "Unknown":
+                name = name.strip().capitalize().decode('utf-8')
             if "CreationDate" in book[0].keys():
                 date = "%s" % book[0]['CreationDate'].strip().decode('utf-8')
                 #regex = re.compile("^([0-9]{4}-[0-9]{2}-[0-9]{2})$")
@@ -146,18 +157,18 @@ class Command(BaseCommand):
         except KeyError as e:
             print(e.message)
         except UnicodeDecodeError:
-            print(title)
-            title = title.decode('latin-1', 'ignore').strip().capitalize()
+            print(name)
+            name = name.decode('utf-8', 'ignore').strip().capitalize()
 
         return {
-            'title': title,
+            'name': name,
             'date': date,
             'genre': producer,
             'author': author
         }
 
 
-class ImportAuthor():
+class ImportAuthor(object):
     @staticmethod
     def import_authors():
         # Artists without pictures are considered as "new"
@@ -186,7 +197,7 @@ class ImportAuthor():
                 author.save()
 
 
-class ImportCovers():
+class ImportCovers(object):
     @staticmethod
     def import_covers():
         # Albums with no cover are considered as "new"

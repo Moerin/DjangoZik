@@ -1,0 +1,60 @@
+{% load static %}
+
+<div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Song</th>
+          <th>Album</th>
+          <th>Artist</th>
+          <th>Style</th>
+          <th>Playlist</th>
+      </tr>
+      </thead>
+      <tbody>
+        {% for book in books  %}
+        <tr>
+            <td style="position: relative">
+                <img class="album_cover thumb_small" 
+                data-slug="{{ book.album__slug }}" src="
+                {% if not book.album__picture %}
+                    {% static 'images/no_cover.gif' %}
+                {% else %}
+                    {% if 'http' in book.album__picture %}
+                    {{ book.album__picture }}
+                    {% else %}
+                    {% static book.album__picture %}
+                    {% endif %}
+                {% endif %}" 
+                     data-picture="{% if book.album__picture %}yes{% else %}no{% endif %}" />
+                 {% if 'http' in book.album__picture %}
+                     <img class="remote_small" src="{% static "images/remote_icon.png" %}"/>
+                 {% endif %}
+            </td>
+            <td>
+            {% if 'http' in book.filepath %}
+                <a class="book" data-source="{{ book.filepath }}" href="">{{ book.title }}</a></td>
+            {% else %}
+                <a class="book" data-source="{{ MEDIA_URL }}{{ book.filepath }}" href="">{{ book.title }}</a></td>
+            {% endif %}
+            <td><a class="async" href="/songs/album/{{book.album__slug }}">{{ book.album__name }}</a></td>
+            <td><a class="async" href="{% url  "albums" book.artist__slug %}">{{ book.artist__name }}</a></td>
+            <td><a class="async" href="{% url  "artists" book.style__slug %}">{{ book.style__name }}</a></td>
+            <td>
+                <a href="#" class="add_to_playlist" data-slug="{{ book.slug }}">
+                    <span class="glyphicon glyphicon-plus-sign"></span>
+                </a>
+            {% if type != null %}
+                {% if type == "playlist" %}
+                <a href="#" class="remove_from_playlist" data-playlist="{{ playlist.slug }}" data-slug="{{ book.slug }}"><span class="glyphicon glyphicon-minus-sign"></span></a>
+                {% endif %}
+            {% endif %}
+                <a href="{% if 'http' in book.filepath %}{{ book.filepath }}{% else %}{% static  book.filepath %}{% endif %}" class="" target="_blank"><span class="glyphicon glyphicon-download-alt"></span></a>
+                <a href="{% url "tab" %}?book={{ book.title }}" class="async"><span class="glyphicon glyphicon-music"></span></a>
+            </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+</div>

@@ -38,52 +38,45 @@ class BookView(TemplateView):
         context = super(BookView, self).get_context_data(**kwargs)
 
         remote_instances = RemoteInstance.objects.all()
-        songs = []
+        books = []
 
-        if self.kwargs['type'] == 'album':
+        a_type = self.kwargs.get('type', None)
+
+        if a_type == 'album':
             album = Album.objects.filter(slug=self.kwargs['key'])
             context['album'] = album
-            songs = Song.objects.filter(album__in=album).values(
+            books = Song.objects.filter(album__in=album).values(
                 'title', 'slug', 'filepath', 'album__slug', 'album__name',
                 'album__picture', 'artist__name', 'artist__slug',
                 'style__name', 'style__slug')
             api_client = ApiClient()
-            remote_songs = api_client.songs(album=self.kwargs['key'],
+            remote_songs = api_client.books(album=self.kwargs['key'],
                                             instances=remote_instances)
             try:
-                songs = self.merge_dict(songs, remote_songs['songs'])
+                books = self.merge_dict(books, remote_songs['books'])
             except KeyError:
                 pass
 
-        elif self.kwargs['type'] == 'playlist':
-            playlist = Playlist.objects.get(slug=self.kwargs['key'])
-            context['playlist'] = playlist
-            songs = Song.objects.filter(playlist=playlist).values(
-                'title', 'slug', 'filepath', 'album__slug', 'album__name',
-                'album__picture', 'artist__name', 'artist__slug',
-                'style__name', 'style__slug')
-
-        elif self.kwargs['type'] == 'artist':
+        elif a_type == 'artist':
             artist = Artist.objects.filter(slug=self.kwargs['key'])
             context['artist'] = artist
-            songs = Song.objects.filter(artist=artist).order_by(
+            books = Song.objects.filter(artist=artist).order_by(
                 'album__name').values(
                     'title', 'slug', 'filepath', 'album__slug', 'album__name',
                     'album__picture', 'artist__name', 'artist__slug',
                     'style__name', 'style__slug')
 
             api_client = ApiClient()
-            remote_songs = api_client.songs(artist=self.kwargs['key'],
+            remote_songs = api_client.books(artist=self.kwargs['key'],
                                             instances=remote_instances)
             try:
-                songs = self.merge_dict(songs, remote_songs['songs'])
+                books = self.merge_dict(books, remote_songs['books'])
             except KeyError:
                 pass
 
-        context['type'] = self.kwargs['type']
-        context['songs'] = songs
-        context['active'] = "songs"
-        context['modal_playlists'] = Playlist.objects.all()
+        context['type'] = a_type
+        context['books'] = books
+        context['active'] = "books"
         return context
 
 class AuthorView(TemplateView):
